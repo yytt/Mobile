@@ -1,0 +1,940 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width,user-scalable=no">
+    <meta name="format-detection" content="telephone=no" />
+    <meta http-equiv="Content-Language" content="en_US" />
+    <title>Letsos Mobile</title>
+    <link href="css/signaturepad/jquery.signaturepad.min.css" rel="stylesheet">
+    <link href="css/mobiscroll/mobiscroll.scroller.min.css" rel="stylesheet" />
+    <link href="css/mobiscroll/mobiscroll.scroller.ios.min.css" rel="stylesheet" />
+    <link href="css/kendo/kendo.common.min.css" rel="stylesheet">
+    <link href="css/kendo/kendo.blueopal.min.css" rel="stylesheet">
+    <link href="css/kendo/kendo.mobile.all.min.css" rel="stylesheet">
+    <link href="css/app.min.css" rel="stylesheet">
+</head>
+<body id="app">
+    <div data-role="drawer" id="mainMenu" data-model="sv.vm" data-views="['vwMain']">
+        <ul data-role="listview" data-type="group">
+            <li>
+                TIME
+                <ul>
+                    <li data-icon="recents"><a href="#vwPdSum" data-transition="none">Weekly Time Summary</a></li>
+                    <li data-icon="na"><a data-bind="click: mainMenu.timesheet">Past Timesheets</a></li>
+                </ul>
+            </li>
+            <li>
+                TICKET
+                <ul>
+                    <li data-icon="na"><a data-bind="click: mainMenu.tgView">Toggle Active/Completed</a></li>
+                    <li data-icon="search"><a href="#vwHist" data-transition="none">Search History</a></li>
+                    <li data-icon="add"><a data-bind="click: mainMenu.addTkt">Add a Ticket</a></li>
+                </ul>
+            </li>
+            <li>
+                OTHER
+                <ul>
+                    <li data-icon="settings"><a href="#vwSetting" data-transition="none">App Settings</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <!-- level 0. main view.  -->
+    <div id="vwMain" data-role="view" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-level="0">
+        <div data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" data-align="left" data-rel="drawer" href="#mainMenu" data-icon="drawer-a" class="ls-navmenu-btn">Menu</a>
+                <span data-role="view-title" data-bind="text: cont.viewTitle, style: { color: cont.titleColor }">Active</span>
+                <a data-role="button" data-align="right" data-icon="refresh" data-bind="click: sync">Sync</a>
+            </div>
+        </div>
+        <ul id="woList"></ul>
+    </div>
+
+    <!-- level 2. tab views. -->
+    <div id="vwWo" data-role="view" data-title="General" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-layout="woLayout" data-level="2">
+        <header data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back" data-align="left" data-bind="click: save.wo">Back</a>
+                <span data-role="view-title"></span>
+                <a data-role="button" data-align="right" data-bind="click: save.activate, invisible: wo.IsActivated">Activate</a>
+                <a data-role="button" data-align="right" data-bind="click: del.wo, visible: deletable" class="ls-del-btn">Delete</a>
+            </div>
+            <div>
+                <span class="k-invalid-msg" data-for="nmTktType"></span>
+                <span class="k-invalid-msg" data-for="nmJobNo"></span>
+                <span class="k-invalid-msg" data-for="nmCc"></span>
+                <span class="k-invalid-msg" data-for="nmCustName"></span>
+                <span class="k-invalid-msg" data-for="nmReason"></span>
+                <span class="k-invalid-msg" data-for="nmAddr"></span>
+            </div>
+        </header>
+        <div class="ls-tot2" data-bind="invisible: lock.priTech, text: cont.priTech"></div>
+        <div class="ls-tot2" data-bind="invisible: lock.tktOwner, text: cont.tktOwner"></div>
+        <div class="ls-alert" data-bind="visible: lock.invalidJobCc">Invalid job/cost code! You may not get paid! Call office ASAP!</div>
+        <ul data-role="listview" data-style="inset">
+            <li data-bind="invisible: lock.ohcd" id="lnTktType">
+                <label>Ticket Type<select name="nmTktType"></select></label>
+            </li>
+            <li data-role="touch" data-hold="sv.helper.jobNoHold">
+                <label>
+                    Job# <a id="btnImgWo" data-role="button" data-icon="gallery-a" data-bind="click: show.img.catWo, invisible: isVSHE" class="ls-detail-btn"></a>
+                    <input name="nmJobNo" type="number" data-bind="value: wo.JobNo, disabled: lock.jobcc, events: {change: jobNoChange}" placeholder="required" required data-required-msg="Job No. is required" max="810999" data-max-msg="Job No. is invalid" />
+                </label>
+            </li>
+            <li>
+                <label>Cost Code<input name="nmCc" type="number" data-bind="value: wo.Cc, disabled: lock.jobcc" placeholder="required" required data-required-msg="Cost Code is required" min="0" max="999999" data-max-msg="Cost Code is invalid" /></label>
+            </li>
+            <li>
+                <label><span data-bind="text: cont.custName">Cust. Name</span><input name="nmCustName" type="text" data-bind="value: wo.CustName, disabled: lock.custName" placeholder="required" /></label>
+            </li>
+            <li data-bind="visible: isDisp">
+                <label>Contact<input type="text" data-bind="value: wo.Contact, disabled: isTktCmpSig" /></label>
+            </li>
+            <li data-bind="visible: isDisp">
+                <label>
+                    Tel <a data-role="button" data-icon="phone" data-bind="click: show.dial" class="ls-detail-btn"></a>
+                    <input type="tel" data-bind=" value: wo.Tel, disabled: isTktCmpSig" />
+                </label>
+            </li>
+            <li data-bind="visible: isDisp">
+                <label>Cust. PO<input type="text" data-bind="value: wo.CustPo, disabled: isTktCmpSig" /></label>
+            </li>
+            <li data-bind="visible: isDisp">
+                <label>
+                    Rep <a data-role="button" data-icon="phone" data-bind="click: show.dialResp" class="ls-detail-btn"></a>
+                    <input type="text" data-bind="value: wo.Resp, disabled: isTktCmpSig" />
+                </label>
+            </li>
+        </ul>
+        <ul data-role="listview" data-style="inset" data-type="group">
+            <li>
+                <div class="km-group-title"><span data-bind="text: cont.reason">Reason For Call</span> <a data-role="button" data-icon="info" data-bind="click: show.cmtD, visible: isDisp" class="ls-detail-btn"></a></div>
+                <ul>
+                    <li class="ls-full-textarea">
+                        <textarea name="nmReason" data-bind="value: wo.Reason, disabled: isTktCmpSig, attr: {placeholder: cont.phReason }"></textarea>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+        <ul data-role="listview" data-style="inset" data-type="group" data-bind="visible: isDisp">
+            <li>
+                <div class="km-group-title">Address <a data-role="button" data-icon="globe" data-bind="click: show.map" class="ls-detail-btn"></a></div>
+                <ul>
+                    <li class="ls-full-textarea">
+                        <textarea name="nmAddr" data-bind="value: wo.Addr, disabled: isTktCmpSig" placeholder="required"></textarea>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div id="vwWork" data-role="view" data-title="Work" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-layout="woLayout" data-level="2">
+        <header data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back" data-align="left" data-bind="click: save.wo">Back</a>
+                <span data-role="view-title"></span>
+                <a data-role="button" data-align="right" data-icon="add" data-bind="click: add.work, invisible: isTktCmpSig" class="ls-navadd-btn ls-addwork">Work</a>
+            </div>
+            <div>
+                <span class="k-invalid-msg" data-for="recomd"></span>
+            </div>
+        </header>
+        <ul data-role="listview" data-style="inset" data-type="group">
+            <li>
+                <div class="km-group-title">
+                    Equipment <a data-role="button" data-icon="add" data-bind="click: add.equip, invisible: isTktCmpSig" class="ls-add-btn"></a>
+                    <a data-role="button" data-icon="search-a" data-bind="click: add.equips, invisible: isTktCmpSig" class="ls-detail-btn"></a>
+                </div>
+                <ul data-role="listview" data-template="tmEquip" data-bind="source: ds.equips, click: show.equip"></ul>
+            </li>
+            <li>
+                <div class="km-group-title">Work Performed <a data-role="button" data-icon="add" data-bind="click: add.work, invisible: isTktCmpSig" class="ls-add-btn ls-addwork"></a></div>
+                <ul data-role="listview" data-template="tmWork" data-bind="source: ds.works"></ul>
+            </li>
+            <li>
+                <div class="km-group-title">Recommendation <a data-role="button" data-icon="add" data-bind="click: show.recomd, invisible: lock.recomAdd" class="ls-add-btn"></a></div>
+                <ul id="recomdWrapper" data-bind="invisible: lock.isRecomBlank">
+                    <li class="ls-full-textarea">
+                        <textarea name="recomd" data-bind="value: wo.Recomd, disabled: isTktCmp"></textarea>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div id="vwMatl" data-role="view" data-title="Material" data-model="sv.vm" data-show="sv.ui.vwShow" data-layout="woLayout" data-level="2">
+        <header data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back" data-align="left" data-bind="click: save.wo">Back</a>
+                <span data-role="view-title"></span>
+                <a data-role="button" data-align="right" data-icon="add" data-bind="click: add.tool, invisible: isTktCmpSig" class="ls-navadd-btn">Tool</a>
+            </div>
+        </header>
+        <ul data-role="listview" data-style="inset" data-type="group">
+            <li>
+                <div class="km-group-title">
+                    Material <a data-role="button" data-icon="add" data-bind="click: add.matl, invisible: isTktCmpSig" class="ls-add-btn"></a>
+                </div>
+                <ul data-role="listview" data-template="tmMatl" data-bind="source: ds.matls, click: show.matl"></ul>
+            </li>
+            <li>
+                <div class="km-group-title">
+                    Tool Rental <a data-role="button" data-icon="add" data-bind="click: add.tool, invisible: isTktCmpSig" class="ls-add-btn"></a>
+                    <a data-role="button" data-icon="more" data-bind="click: add.tools, invisible: isTktCmpSig" class="ls-detail-btn"></a>
+                </div>
+                <ul data-role="listview" data-template="tmTool" data-bind="source: ds.tools, click: show.tool"></ul>
+            </li>
+            <li>
+                Misc. Material
+                <ul>
+                    <li class="ls-full-textarea">
+                        <textarea data-bind="value: wo.Misc, disabled: isTktCmpSig"></textarea>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div id="vwLabor" data-role="view" data-title="Labor" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-layout="woLayout" data-level="2">
+        <header data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back" data-align="left" data-bind="click: save.wo">Back</a>
+                <span data-role="view-title"></span>               
+                <a data-role="button" data-align="right" data-icon="add" data-bind="click: add.labor, invisible: isTktCmpSig" class="ls-navadd-btn">Labor</a>
+            </div>
+            <div>
+                <span id="lbrInvalid" class="k-widget k-tooltip k-tooltip-validation k-invalid-msg ls-hidden"><span class="k-icon k-warning"></span> <span id="lbrInvalidMsg"></span></span>
+            </div>
+        </header>
+        <div class="ls-tot2" data-bind="invisible: lock.VS, html: cont.availHrVS"></div>
+        <ul id="lstLbr" data-role="listview" data-style="inset" data-template="tmLabor" data-header-template="tmLaborHeader" data-bind="source: ds.labors, click: show.labor"></ul>
+    </div>
+
+    <div id="vwExp" data-role="view" data-title="Expense" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-layout="woLayout" data-level="2">
+        <header data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back" data-align="left" data-bind="click: save.wo">Back</a>
+                <span data-role="view-title"></span>
+                <a data-role="button" data-align="right" data-icon="add" data-bind="click: add.exp, invisible: isTktCmpSig" class="ls-navadd-btn">Exps</a>
+            </div>
+        </header>
+        <ul id="lstExp" data-role="listview" data-style="inset" data-template="tmExp" data-header-template="tmExpHeader" data-bind="source: ds.exps, click: show.exp"></ul>
+    </div>
+
+    <div id="vwSig" data-role="view" data-title="Signature" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-layout="woLayout" data-level="2">
+        <header data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back" data-align="left" data-bind="click: save.sigBack">Back</a>
+                <span data-role="view-title"></span>
+                <a id="btnCmpWo" data-role="button" class="ls-hl2-btn ls-sig-compl" data-align="right" data-bind="click: save.acceptT, invisible: lock.cmp">Complete</a>
+            </div>
+            <div>
+                <span class="k-invalid-msg" data-for="Contact"></span>
+                <span class="k-invalid-msg" data-for="Tel"></span>
+                <span class="k-invalid-msg" data-for="Email"></span>
+                <span class="k-invalid-msg" data-for="sigOutput"></span>
+                <span id="orienAlert" class="k-widget k-tooltip k-tooltip-validation k-invalid-msg ls-hidden"><span class="k-icon k-warning"></span> Suggest to rotate your phone</span>
+            </div>
+        </header>
+        <ul id="btngSig" data-role="buttongroup">
+            <li>Customer</li>
+            <li>Technician</li>
+        </ul>
+        <div id="sig">
+            <div id="sigTop">
+                <ul data-role="listview" data-style="inset">
+                    <li>
+                        <label>Contact<input name="Contact" type="text" class="name" placeholder="required" data-bind="value: wo.SigContact, disabled: isTktCmpSig" /></label>
+                    </li>
+                    <li>
+                        <label>
+                            Tel <a data-role="button" data-icon="phone" data-bind="click: show.dialSig" class="ls-detail-btn"></a>
+                            <input name="Tel" type="tel" data-bind="value: wo.SigTel, disabled: isTktCmpSig" />
+                        </label>
+                    </li>
+                    <li>
+                        <label>
+                            Email <a data-role="button" data-icon="search-a" data-bind="click: show.getEmail, visible: wo.IsSelf" class="ls-detail-btn"></a>
+                            <input name="Email" type="text" data-bind="value: wo.SigEmail, enabled: wo.IsSelf" />
+                        </label>
+                    </li>
+                </ul>
+                <ul data-role="listview" data-style="inset" data-type="group">
+                    <li>
+                        Customer Comments
+                        <ul>
+                            <li class="ls-full-textarea">
+                                <textarea data-bind="value: wo.CmtC, disabled: isTktCmpSig"></textarea>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <div data-bind="invisible: isTktCmpSig" style="margin-left:1em; margin-top:.5em">
+                <div id="sigBtns">
+                    <a data-role="button" data-bind="click: save.acceptC" class="ls-navadd-btn ls-sig-accept">Accept</a>
+                    <a class="clearButton km-button"><span class="km-text">Clear</span></a>
+                    <span class="typeIt ls-hidden" onclick="sv.ui.chgSigMode()"><a class="km-button"><span class="km-text">Type</span></a></span>
+                    <span class="drawIt" onclick="sv.ui.chgSigMode()"><a class="km-button ls-sig-draw"><span class="km-text">Draw</span></a></span>
+                </div>
+                <div class="sigWrapper">
+                    <div class="typed" data-bind="text: wo.SigContact"></div>
+                    <canvas class="pad" data-bind="attr: {width: sig.width, height: sig.height}"></canvas>
+                    <input name="sigOutput" type="hidden" class="output">
+                </div>
+            </div>
+        </div>
+        <ul id="sig2" data-role="listview" data-style="inset" data-type="group" class="ls-hidden">
+            <li>
+                Tech Comments (Internal Use)
+                <ul>
+                    <li class="ls-full-textarea">
+                        <textarea data-bind="value: wo.CmtT, disabled: isTktCmp"></textarea>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <!-- tab layout for detail views -->
+    <div data-role="layout" data-id="woLayout">
+        <div data-role="footer">
+            <div id="tabs" data-role="tabstrip" data-select="sv.ui.tabSelect">
+                <a href="#vwWo" data-icon="organize">General</a>
+                <a href="#vwWork" data-icon="details">Work</a>
+                <a href="#vwMatl" data-icon="cart">Material</a>
+                <a href="#vwExp" data-icon="clip-a">Expense</a>
+                <a href="#vwLabor" data-icon="recents">Labor</a>
+                <a href="#vwSig" data-icon="compose">Signature</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- level 3 -->    
+    <div id="vwWorkItem" data-role="view" data-title="Work Done" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-level="3">
+        <header data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back" data-align="left" data-bind="click: save.work">Back</a>
+                <span data-role="view-title"></span>
+                <a data-role="button" data-align="right" data-bind="click: del.work, invisible: lock.dtl" class="ls-del-btn">Delete</a>
+            </div>
+            <div>
+                <span class="k-invalid-msg" data-for="nmDesc"></span>
+            </div>
+        </header>
+        <ul data-role="listview" data-style="inset">
+            <li>
+                <label>Date<input type="text" class="ls-mobi-date" data-bind="dateValue: work.Date, disabled: lock.dtl" /></label>
+            </li>
+        </ul>
+        <ul data-role="listview" data-style="inset" data-type="group">
+            <li>
+                Description
+                <ul>
+                    <li class="ls-full-textarea">
+                        <textarea name="nmDesc" data-bind="value: work.Desc, disabled: lock.dtl" placeholder="required" required data-required-msg="Work Description is required"></textarea>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    
+    <div id="vwEquipItem" data-role="view" data-title="Equipment" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-level="3">
+        <header data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back" data-align="left" data-bind="click: save.equip">Back</a>
+                <span data-role="view-title"></span>
+                <a data-role="button" data-align="right" data-bind="click: del.equip, invisible: isTktCmpSig" class="ls-del-btn">Delete</a>
+            </div>
+            <div>
+                <span class="k-invalid-msg" data-for="Manufacturer"></span>
+                <span class="k-invalid-msg" data-for="nmModelNo"></span>
+                <span class="k-invalid-msg" data-for="nmSerialNo"></span>
+            </div>
+        </header>
+        <ul data-role="listview" data-style="inset">
+            <li>
+                <label>Mfr.<input name="Manufacturer" type="text" data-bind="value: equip.Mfr, disabled: isTktCmpSig" placeholder="required" required /></label>
+            </li>
+            <li>
+                <label>Model No.<input name="nmModelNo" type="text" data-bind="value: equip.Model, disabled: isTktCmpSig" placeholder="required" required data-required-msg="Model No. is required" /></label>
+            </li>
+            <li>
+                <label>Serial No.<input name="nmSerialNo" type="text" data-bind="value: equip.Serial, disabled: isTktCmpSig" placeholder="required" required data-required-msg="Serial No. is required" /></label>
+            </li>
+            <li>
+                <label>ID/Location<input type="text" data-bind="value: equip.Loc, disabled: isTktCmpSig" /></label>
+            </li>
+            <li>
+                <label>Photo/Rpt.<span class="ls-lv-r-col"><a id="btnImgEquip" data-role="button" data-icon="gallery-a" data-bind="click: show.img.catEquip" class="ls-detail-btn"></a></span></label>
+            </li>
+        </ul>
+        <ul data-role="listview" data-style="inset" data-type="group">
+            <li>
+                <div class="km-group-title">Filter/Belt/Misc.</div>
+                <ul>
+                    <li class="ls-full-textarea">
+                        <textarea data-bind="value: equip.Spec, disabled: isTktCmpSig"></textarea>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div id="vwMatlItem" data-role="view" data-title="Material Detail" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-level="3">
+        <header data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back" data-align="left" data-bind="click: save.matl">Back</a>
+                <span data-role="view-title"></span>
+                <a data-role="button" data-align="right" data-bind="click: del.matl, invisible: isTktCmpSig" class="ls-del-btn">Delete</a>
+            </div>
+            <div>
+                <span class="k-invalid-msg" data-for="nmPoNo"></span>
+                <span class="k-invalid-msg" data-for="nmPoQty"></span>
+                <span class="k-invalid-msg" data-for="nmMatlDesc"></span>
+            </div>
+        </header>
+        <ul data-role="listview" data-style="inset">
+            <li>
+                <label>PO No.<input name="nmPoNo" type="text" data-bind="value: matl.PoNo, disabled: isTktCmpSig" placeholder="required" required data-required-msg="PO No. is required" /></label>
+            </li>
+            <li>
+                <label>Quantity<input name="nmPoQty" type="text" data-bind="value: matl.Qty, disabled: isTktCmpSig" placeholder="required" required data-required-msg="Quantity is required" /></label>
+            </li>
+        </ul>
+        <ul data-role="listview" data-style="inset" data-type="group">
+            <li>
+                <div class="km-group-title">Material Description</div>
+                <ul>
+                    <li class="ls-full-textarea">
+                        <textarea name="nmMatlDesc" data-bind="value: matl.Desc, disabled: isTktCmpSig" placeholder="required" required data-required-msg="Description is required"></textarea>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div id="vwToolItem" data-role="view" data-title="Tool Detail" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-level="3">
+        <header data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back" data-align="left" data-bind="click: save.tool">Back</a>
+                <span data-role="view-title"></span>
+                <a data-role="button" data-align="right" data-bind="click: del.tool, invisible: isTktCmpSig" class="ls-del-btn">Delete</a>
+            </div>
+            <div>
+                <span class="k-invalid-msg" data-for="nmToolDesc"></span>
+                <span class="k-invalid-msg" data-for="nmToolQty"></span>
+                <span class="k-invalid-msg" data-for="nmRentalDays"></span>
+            </div>
+        </header>
+        <ul data-role="listview" data-style="inset" data-type="group">
+            <li>
+                <div class="km-group-title">
+                    Tool Description <a data-role="button" data-icon="search" data-bind="click: show.toolsearch, invisible: isTktCmpSig" class="ls-detail-btn"></a>
+                </div>
+                <ul>
+                    <li class="ls-full-textarea">
+                        <input type="text" data-bind="value: tool.Id, visible: false" />
+                        <textarea name="nmToolDesc" data-bind="value: tool.Desc, disabled: isTktCmpSig" placeholder="required" required data-required-msg="Description is required"></textarea>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+        <ul data-role="listview" data-style="inset">
+            <li>
+                <label>Quantity<input name="nmToolQty" type="number" data-bind="value: tool.Qty, disabled: isTktCmpSig" placeholder="required" required data-required-msg="Quantity is required" /></label>
+            </li>
+            <li>
+                <label>Days<input name="nmRentalDays" type="number" data-bind="value: tool.Days, disabled: isTktCmpSig" placeholder="required" required data-required-msg="Rental Days is required" /></label>
+            </li>
+        </ul>
+    </div>
+
+    <div id="vwLaborItem" data-role="view" data-title="Labor Detail" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-level="3">
+        <header data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back ls-lbr-back" data-align="left" data-bind="click: save.labor">Back</a>
+                <span data-role="view-title"></span>
+                <a data-role="button" data-align="right" data-bind="click: del.labor, invisible: lock.dtl" class="ls-del-btn">Delete</a>
+            </div>
+            <div>
+                <span class="k-invalid-msg" data-for="nmTechNo"></span>
+                <span class="k-invalid-msg" data-for="ST"></span>
+            </div>
+        </header>
+        <ul data-role="listview" data-style="inset">
+            <li>
+                <label>ST<input name="ST" type="number" data-bind="value: labor.ST, disabled: lock.dtl" data-value-update="input" /></label>
+            </li>
+            <li data-bind="invisible: isVSH">
+                <label>OT<input name="OT" type="number" data-bind="value: labor.OT, disabled: lock.dtl" data-value-update="input" /></label>
+            </li>
+            <li data-bind="invisible: isVSH">
+                <label>DT<input name="DT" type="number" data-bind="value: labor.DT, disabled: lock.dtl" data-value-update="input" /></label>
+            </li>
+            <li data-bind="visible: isDispCons">
+                <label><span class="ls-dim">Travel</span><input name="nmTravel" type="number" data-bind="value: labor.TT, disabled: lock.dtl" data-value-update="input" placeholder="out of town travel" /></label>
+            </li>
+            <li data-bind="visible: isDispCons">
+                <label>
+                    <span class="ls-dim">Shift</span>
+                    <select id="shift">
+                        <option value=" ">Regular</option>
+                        <option value="2">2nd Shift</option>
+                    </select>
+                </label>
+            </li>
+            <li>
+                <label>
+                    Tech No.<input name="nmTechNo" type="number" data-bind="value: labor.No, disabled: lock.dtl" placeholder="required" required data-required-msg="Tech No. is required" />
+                    <a data-role="button" data-icon="search" data-bind="click: show.techsearch, invisible: lock.dtl" class="ls-detail-btn" style="left: 40%; z-index: 2"></a>
+                </label>
+            </li>
+            <li>
+                <label>Name<input type="text" data-bind="value: labor.Name" disabled="disabled" /></label>
+                <a data-role="button" data-d="0" data-icon="more" data-bind="click: add.labors, invisible: lock.lbrSel" class="ls-detail-btn"></a>
+            </li>
+            <li>
+                <label>Date<input class="ls-mobi-date" type="text" data-bind="dateValue: labor.Date, disabled: lock.dtl" /></label>
+                <a data-role="button" data-d="1" data-icon="more" data-bind="click: add.labors, invisible: lock.lbrSel" class="ls-detail-btn"></a>
+            </li>
+        </ul>
+    </div>
+
+    <div id="vwExpItem" data-role="view" data-title="Expense Detail" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-level="3">
+        <header data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back ls-exp-back" data-align="left" data-bind="click: save.exp">Back</a>
+                <span data-role="view-title"></span>
+                <a data-role="button" data-align="right" data-bind="click: del.exp, invisible: lock.exp" class="ls-del-btn">Delete</a>
+            </div>
+            <div>
+                <span class="k-invalid-msg" data-for="nmTechNoExp"></span>
+                <span class="k-invalid-msg" data-for="nmDescExp"></span>
+                <span class="k-invalid-msg" data-for="nmAmtExp"></span>
+            </div>
+        </header>
+        <ul data-role="listview" data-style="inset">
+            <li>
+                <label>
+                    Tech No.<input name="nmTechNoExp" type="number" data-bind="value: exp.No, disabled: lock.exp" placeholder="required" required data-required-msg="Tech No. is required" />
+                    <a data-role="button" data-icon="search" data-bind="click: show.techsearch, invisible: lock.exp" class="ls-detail-btn" style="left: 40%; z-index: 2"></a>
+                </label>
+            </li>
+            <li>
+                <label>Name<input type="text" data-bind="value: exp.Name" disabled="disabled" /></label>
+            </li>
+            <li>
+                <label>Date<input class="ls-mobi-date" type="text" data-bind="dateValue: exp.Date, disabled: lock.exp" /></label>
+            </li>
+            <li>
+                <label>Description<input name="nmDescExp" type="text" data-bind="value: exp.Desc" placeholder="required" required data-required-msg="Description is required" /></label>
+            </li>
+            <li>
+                <label>Amount <input name="nmAmtExp" type="number" data-bind="value: exp.Amt, disabled: lock.exp" data-value-update="input" placeholder="required" required data-required-msg="Amount is required" /></label>
+            </li>
+            <li>
+                <label>Receipt<span class="ls-lv-r-col"><a data-role="button" data-icon="gallery-a" data-bind="click: show.img.exp" class="ls-detail-btn"></a></span></label>
+            </li>
+        </ul>
+    </div>
+
+    <div id="vwCmtD" data-role="view" data-title="Comments" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-layout="woLayout" data-level="3">
+        <header data-role="header">
+            <div data-role="navbar">
+                <a data-role="backbutton" data-align="left">Back</a>
+                <span data-role="view-title"></span>
+            </div>
+        </header>
+        <ul data-role="listview" data-style="inset" data-type="group">
+            <li>
+                Dispatcher
+                <ul><li><div id="cmtD1"></div></li></ul>
+            </li>
+            <li>
+                Customer
+                <ul><li><div id="cmtD2"></div></li></ul>
+            </li>
+        </ul>
+    </div>
+
+    <div id="vwEquips" data-role="view" data-title="Equips" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-level="3">
+        <header data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back" data-align="left" data-bind="click: save.equips">Back</a>
+                <span data-role="view-title"></span>
+            </div>
+        </header>
+        <ul id="equipSel" data-role="listview" data-template="tmEquipSel" data-style="inset"></ul>
+    </div>
+
+    <div id="vwTools" data-role="view" data-title="Tools" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-level="4" data-transition="none">
+        <header data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back" data-align="left" data-bind="click: save.tools">Back</a>
+                <span data-role="view-title"></span>
+                <a data-role="button" data-align="right" data-click="sv.helper.toTop">To Top</a>
+            </div>
+        </header>
+        <ul id="toolSel" data-role="listview" data-bind="source: null" data-template="tmToolSel" data-header-template="tmToolSelHd" data-filterable="{ field: 'Desc', operator: 'contains' }" data-style="inset"></ul>
+    </div>
+
+    <div id="vwLaborsE" data-role="view" data-title="Labors" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-level="4" data-transition="none">
+        <header data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back" data-align="left" data-bind="click: save.labors">Back</a>
+                <span data-role="view-title"></span>
+                <a data-role="button" data-align="right" data-click="sv.helper.toTop">To Top</a>
+            </div>
+        </header>
+        <div id="lbrSelTitleE" class="ls-tot2"></div>
+        <ul id="lbrSelE" class="ls-lbrSel" data-role="listview" data-bind="source: null" data-template="tmLaborSel" data-header-template="tmLaborSelHd" data-style="inset" data-filterable="{ field: 'Name', operator: 'contains' }"></ul>
+    </div>
+
+    <div id="vwLaborsD" data-role="view" data-title="Labors" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-level="4">
+        <header data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back" data-align="left" data-bind="click: save.labors">Back</a>
+                <span data-role="view-title"></span>
+            </div>
+        </header>
+        <div id="lbrSelTitleD" class="ls-tot2"></div>
+        <ul id="lbrSelD" class="ls-lbrSel" data-role="listview" data-bind="source: null" data-template="tmLaborSel" data-header-template="tmLaborSelHd" data-style="inset"></ul>
+    </div>
+
+    <div id="vwImg" data-role="view" data-title="Photos" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-level="3">
+        <header data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back" data-align="left" data-bind="click: save.img">Back</a>
+                <span data-role="view-title"></span>
+                <a id="btnImgAct" data-role="button" data-align="right" data-icon="camera" data-bind="click: show.img.act, invisible: lock.imgAct" class="ls-navadd-btn">Action</a>
+            </div>
+        </header>
+        <div id="srvImg"></div>
+        <a id="prev-img" data-role="button" data-icon="prev-a"></a>
+        <a id="next-img" data-role="button" data-icon="next-a"></a>
+    </div>
+
+    <!-- level 1 -->
+    <div id="vwSetting" data-role="view" data-title="Settings" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-level="1">
+        <header data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back" data-align="left" data-bind="click: save.setting">Save</a>
+                <span data-role="view-title"></span>
+            </div>
+            <div>
+                <span class="k-invalid-msg" data-for="nmUid"></span>
+                <span class="k-invalid-msg" data-for="nmPwd"></span>
+            </div>
+        </header>
+        <ul data-role="listview" data-style="inset" data-type="group">
+            <li>
+                User Identification
+                <ul>
+                    <li>
+                        <label>User Name<input name="nmUid" type="number" data-bind="value: setting.EmpNo, disabled: lock.user" placeholder="required" required data-required-msg="User Name is required" /></label>
+                    </li>
+                    <li data-bind="invisible: lock.user">
+                        <label>Password<input name="nmPwd" type="password" data-bind="value: setting.Ssn4" pattern="[0-9]*" inputmode="numeric" placeholder="required" required data-required-msg="Password is required" validationmessage="Invalid password" /></label>
+                    </li>
+                    <li data-bind="visible: authened">
+                        <label>Version<input type="text" data-bind="value: setting.Ver" disabled="disabled" /></label>
+                    </li>
+                    <li data-bind="visible: authened">
+                        <label>Last Sync<input type="text" data-bind="value: setting.SyncDate" disabled="disabled" /></label>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div id="vwPdSum" data-role="view" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-level="1">
+        <div data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back" data-align="left" href="#vwMain">Back</a>
+                <span data-role="view-title">Weekly Summary</span>
+            </div>
+        </div>
+        <div id="wkTot" class="ls-tot"></div>
+        <ul id="pdSumList"></ul>
+    </div>
+
+    <div id="vwHist" data-role="view" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-level="1">
+        <div data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back" data-align="left" href="#vwMain">Back</a>
+                <span data-role="view-title">History</span>
+                <a data-role="button" data-align="right" data-click="sv.helper.toTop">To Top</a>
+            </div>
+        </div>
+        <ul id="lstHist"></ul>
+    </div>
+
+    <div id="vwTimesheet" data-role="view" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-level="1">
+        <div data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back" data-align="left" href="#vwMain">Back</a>
+                <span data-role="view-title">Timesheet</span>
+            </div>
+        </div>
+        <ul id="lstTimesheet"></ul>
+    </div>
+
+    <!-- other -->
+    <div id="vwAdvSearch" data-role="view" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-level="2">
+        <div data-role="header">
+            <div data-role="navbar">
+                <a data-role="backbutton" data-align="left">Back</a>
+                <span data-role="view-title">Search</span>
+                <a data-role="button" data-align="right" data-bind="click: show.advSearch">Submit</a>
+            </div>
+        </div>
+        <ul data-role="listview" data-style="inset">
+            <li>
+                <label>Job No.<input type="number" data-bind="value: advSearch.JobNo" /></label>
+            </li>
+            <li>
+                <label>Cost Code<input type="number" data-bind="value: advSearch.Cc" /></label>
+            </li>
+            <li>
+                <label>Customer<input type="text" data-bind="value: advSearch.Cust" /></label>
+            </li>
+            <li>
+                <label>Description<input type="text" data-bind="value: advSearch.Reason" /></label>
+            </li>
+            <li>
+                <label>Address<input type="text" data-bind="value: advSearch.Addr" /></label>
+            </li>
+            <li>
+                <label>Technician<input type="text" data-bind="value: advSearch.Tech" /></label>
+            </li>
+            <li>
+                <label>Salesman<input type="text" data-bind="value: advSearch.Resp" /></label>
+            </li>
+            <li>
+                <label>Open Date<input class="ls-mobi-date" type="text" data-bind="dateValue: advSearch.OpDateF" placeholder="from" /></label>
+            </li>
+            <li>
+                <label>&nbsp;<input class="ls-mobi-date" type="text" data-bind="dateValue: advSearch.OpDateT" placeholder="to" /></label>
+            </li>
+            <li>
+                <label>Close Date<input class="ls-mobi-date" type="text" data-bind="dateValue: advSearch.CmDateF" placeholder="from" /></label>
+            </li>
+            <li>
+                <label>&nbsp;<input class="ls-mobi-date" type="text" data-bind="dateValue: advSearch.CmDateT" placeholder="to" /></label>
+            </li>
+        </ul>
+    </div>
+
+    <div id="vwTechCmtHist" data-role="view" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-level="2">
+        <div data-role="header">
+            <div data-role="navbar">
+                <a data-role="backbutton" data-align="left">Back</a>
+                <span data-role="view-title">Tech Comment</span>
+            </div>
+        </div>
+        <ul id="lstTechCmtHist"></ul>
+    </div>
+
+    <div id="msgblk"><div></div></div>
+    <select id="imgCatWo"></select>
+    <select id="imgCatEquip"></select>
+
+    <div id="diaToolSearch" data-role="modalview" data-init="sv.ui.vwInitModal" style="width: 95%; height: 90%;">
+        <div data-role="header">
+            <div data-role="navbar">
+                <a data-align="left" data-click="sv.ui.closeModalView" data-role="button">Cancel</a>
+                <span>Tools</span>
+                <a data-role="button" data-align="right" data-click="sv.helper.toTop">To Top</a>
+            </div>
+        </div>
+        <ul id="lstToolSearch"></ul>
+    </div>
+
+    <div id="diaTechSearch" data-role="modalview" data-init="sv.ui.vwInitModal" style="width: 90%; height: 90%;">
+        <div data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" data-align="left" data-click="sv.ui.closeModalView">Cancel</a>
+                <span>Techs</span>
+                <a data-role="button" data-align="right" data-click="sv.helper.toTop">To Top</a>
+            </div>
+        </div>
+        <ul id="lstTechSearch"></ul>
+    </div>
+
+    <!-- templates -->
+    <script type="text/x-kendo-template" id="tmWo">
+        <a class="ls-ellipsis ls-itm-dtl">
+            <span class="k-icon k-i-pencil#= !Sig ? ' ls-hidden2' : '' #"></span>
+            <span class="#= IsSelf ? (IsPri ? 'ls-itm': 'ls-itm2') : 'ls-state-disabled' #">
+                #= sv.helper.tktDate(Ts) #
+                <span class="ls-font-normal">#= Reason #</span>
+            </span>
+        </a>
+    </script>
+
+    <script type="text/x-kendo-template" id="tmEquip">
+        <a>
+            <div>#= Mfr ##= data.Loc ? ' (' + data.Loc + ')' : '' #</div>
+            <div class="ls-itm-dtl">
+                <div><span class="ls-dim">MOD: </span>#= Model #</div>
+                <div><span class="ls-dim">S/N: </span>#= Serial #</div>
+            </div>
+        </a>
+    </script>
+
+    <script type="text/x-kendo-template" id="tmWork">
+        <div>#= sv.helper.fDate.dui2(Date) # <a data-role="button" data-icon="details" data-bind="click: show.work" class="ls-detail-btn"></a></div>
+        <div data-role="scroller" class="ls-scroller">#= Desc #</div>
+    </script>
+
+    <script type="text/x-kendo-template" id="tmMatl">
+        <a>
+            <div>#= Desc #</div>
+            <div class="ls-itm-dtl">
+                <div style="width: 40%"><span class="ls-dim">PO: </span>#= PoNo #</div>
+                <div><span class="ls-dim">Qty: </span>#= Qty #</div>
+            </div>
+        </a>
+    </script>
+
+    <script type="text/x-kendo-template" id="tmTool">
+        <a>
+            <div>#= Desc #</div>
+            <div class="ls-itm-dtl">
+                <div style="width: 40%"><span class="ls-dim">Qty: </span>#= Qty #</div>
+                <div><span class="ls-dim">Days: </span>#= Days #</div>
+            </div>
+        </a>
+    </script>
+
+    <script type="text/x-kendo-template" id="tmLaborHeader">
+        #= sv.helper.fDate.dui2(value) # #= (!sv.vm.isTktCmpSig() && value >= sv.helper.fDate.pd().validFrom ? '<a data-role="button" data-icon="add" data-click="sv.vm.add.labor" data-dftdate="' + sv.helper.fDate.dn(value) +'" class="ls-add-btn"></a>' : '') #
+    </script>
+
+    <script type="text/x-kendo-template" id="tmLabor">
+        <a>
+            <div>
+                <div>#= Name # (#= No #)</div>
+            </div>
+            #= sv.helper.renderTmpl($('\#tmHr'), data) #
+        </a>
+    </script>
+
+    <script type="text/x-kendo-template" id="tmExpHeader">
+        #= sv.helper.getTechName(value) # (#= value #) #= (!sv.vm.isTktCmp() ? '<a data-role="button" data-icon="add" data-click="sv.vm.add.exp" data-dftno="' + value +'" class="ls-add-btn"></a>' : '') #
+    </script>
+
+    <script type="text/x-kendo-template" id="tmExp">
+        <a>
+            <div>
+                <div>#= Desc #</div>
+            </div>
+            <div class="ls-itm-dtl">
+                <div style="width: 35%">#= kendo.toString(Amt, 'c2') #</div>
+                <div>#= sv.helper.fDate.dui2(Date) #</div>                
+            </div>
+        </a>
+    </script>
+
+    <script type="text/x-kendo-template" id="tmToolSearch">
+        <a><span style="display:none">#= Id #</span>#= Desc #</a>
+    </script>
+
+    <script type="text/x-kendo-template" id="tmTechSearch">
+        <a>#= Name # (#= No #)</a>
+    </script>
+
+    <script type="text/x-kendo-template" id="tmAct">
+        <ul data-role="actionsheet" data-popup='{"width": "30em"}'>
+            # for (var i = 0; i < data.length; i++) { #
+            <li><a data-action="#= data[i].action #" class="#= data[i].css #">#= data[i].text + (data[i].note ? '<div class="ls-actsht-btn-note">' + data[i].note + '</div>' : '') #</a></li>
+            # } #
+        </ul>
+    </script>
+
+    <script type="text/x-kendo-template" id="tmPdSum">
+        <a>
+            <div class="ls-ellipsis #= IsSelf ? (IsPri ? 'ls-itm' : 'ls-itm2' ) : 'ls-state-disabled' #">
+                #= (StsIcon ? '<span class="ls-sts ' + StsIcon + '"></span>' : '') + JobCc + (PriEmpNo != -1 ? ' ' : '<span class="ls-alert"> (INVALID) </span>') + CustName #
+            </div>
+            <div class="ls-itm-dtl ls-font-normal ls-ellipsis">#= Reason #</div>
+            #= sv.helper.renderTmpl($('\#tmHr'), data) #
+        </a>
+    </script>
+
+    <script type="text/x-kendo-template" id="tmHr">
+        <div class="ls-itm-dtl ls-lbrhr">
+            <div><span class="ls-dim">ST </span>#= ((ST || 0) + (data.TT || 0)) || '' #</div>
+            <div><span class="ls-dim">OT </span>#= OT || '' #</div>
+            <div><span class="ls-dim">DT </span>#= DT || '' #</div>
+            <div class="ls-dim" style="width: auto">#= sv.helper.shiftDesc(data.Cat) #</div>
+        </div>
+    </script>
+
+    <script type="text/x-kendo-template" id="tmSelect">
+        # for (var i = 0; i < data.length; i++) { #
+        <option value="#= data[i].Val #">#: data[i].Desc #</option>
+        # } #
+    </script>
+
+    <script type="text/x-kendo-template" id="tmEquipSel">
+        <div class="ls-sel#= data.isSel ? ' ls-sel-active' : '' #" data-role="touch" data-tap="sv.vm.multiSel.tap" data-hold="sv.vm.multiSel.holdSelAll">
+            #= sv.helper.renderTmpl($('\#tmEquip'), data) #
+        </div>
+    </script>
+
+    <script type="text/x-kendo-template" id="tmToolSel">
+        <div class="ls-col1 ls-sel#= data.isSel ? ' ls-sel-active' : '' #" data-role="touch" data-tap="sv.vm.multiSel.tap">#= Desc #</div>
+        <input class="ls-col2" type="number" value="#= Qty #" data-bind="events: {input: multiSel.input}" data-id="toolQty" />
+    </script>
+
+    <script type="text/x-kendo-template" id="tmToolSelHd">
+        <div class="ls-colHd">
+            <div class="ls-col1">Tool Desc.</div>
+            <div class="ls-col2">Qty</div>
+        </div>
+    </script>
+
+    <script type="text/x-kendo-template" id="tmLaborSel">
+        <div class="ls-col1 ls-sel#= data.my ? ' ls-lbr-mygrp' : '' ##= data.isSel ? ' ls-sel-active' : '' #" data-role="touch" data-tap="sv.vm.multiSel.tap" data-hold="sv.vm.multiSel.holdLbr">#= sv.vm.labor.isD ? sv.helper.fDate.dui2(Date) : Name #</div>
+        <input class="ls-col2" type="number" value="#= data.ST #" data-bind="events: {input: multiSel.input}" data-id="lbrST" />
+        <input class="ls-col3 ls-alert#= sv.vm.isVSH() ? ' ls-hidden2' : '' #" type="number" value="#= data.OT #" data-bind="events: {input: multiSel.input}" data-id="lbrOT" />
+    </script>
+
+    <script type="text/x-kendo-template" id="tmLaborSelHd">
+        <div class="ls-colHd">
+            <div class="ls-col1">#= sv.vm.labor.isD ? 'Date' : 'Name' #</div>
+            <div class="ls-col2">ST</div>
+            <div class="ls-col3 ls-alert">OT</div>
+        </div>
+    </script>
+
+    <script type="text/x-kendo-template" id="tmImg">
+        <div><input type="text" value="#= Desc #" placeholder="#= !sv.vm.lock.imgAct ? 'enter photo description here...' : 'no photo description' #" class="ls-img-desc"#=sv.vm.lock.imgAct ? ' disabled="disabled"' : '' # /></div>
+        <div data-role="scroller" data-zoom="true" class="ls-img-scroller"><img style="width:100%" src="#= url #" /></div>
+    </script>
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/softkeyboard.min.js"></script>
+    <script src="js/webintent.min.js"></script>
+    <script src="js/pushNotification.min.js"></script>
+    <script src="js/imagepicker.min.js"></script>
+    
+    <script src="js/jquery.signaturepad.min.js"></script>
+    <script src="js/jquery.autosize.min.js"></script>
+    <script src="js/mobiscroll.core.min.js"></script>
+    <script src="js/mobiscroll.scroller.min.js"></script>
+    <script src="js/mobiscroll.datetime.min.js"></script>
+    <script src="js/mobiscroll.select.min.js"></script>
+    <script src="js/mobiscroll.scroller.ios.min.js"></script>
+    <script src="js/kendo.mobile.min.js"></script>
+    <script src="js/app.min.js"></script>
+
+    <script src="phonegap.js"></script>
+</body>
+</html>
