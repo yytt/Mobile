@@ -1,4 +1,5 @@
 data/
+debug/
 deploy/
 *.js
 !*.min.js
