@@ -3,7 +3,7 @@
         xmlns:gap     = "http://phonegap.com/ns/1.0"
         xmlns:android = "http://schemas.android.com/apk/res/android"        
         id            = "com.letsos.mobile"
-        version       = "1.4.2.6">
+        version       = "1.4.2.7">
   <name>Letsos Mobile</name>
 
   <description>
@@ -20,7 +20,7 @@
   
   <access origin="*"/>
 
-  <preference name="phonegap-version" value="3.5.0" />  
+  <preference name="phonegap-version" value="3.6.3" />  
   <preference name="android-minSdkVersion" value="15" />
   <preference name="android-targetSdkVersion" value="19" />
   <preference name="AutoHideSplashScreen" value="false" />
