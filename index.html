@@ -370,7 +370,7 @@
                 <label>ID/Location<input type="text" data-bind="value: equip.Loc, disabled: isTktCmpSig" /></label>
             </li>
             <li>
-                <label>Photo/Rpt.<span class="ls-lv-r-col"><a id="btnImgEquip" data-role="button" data-icon="gallery-a" data-bind="click: show.img.catEquip" class="ls-detail-btn"></a></span></label>
+                <label>Photo<span class="ls-lv-r-col"><a id="btnImgEquip" data-role="button" data-icon="gallery-a" data-bind="click: show.img.catEquip" class="ls-detail-btn"></a></span></label>
             </li>
         </ul>
         <ul data-role="listview" data-style="inset" data-type="group">
@@ -462,7 +462,6 @@
                 <a data-role="button" data-align="right" data-bind="click: del.labor, invisible: lock.dtl" class="ls-del-btn">Delete</a>
             </div>
             <div>
-                <span class="k-invalid-msg" data-for="nmTechNo"></span>
                 <span class="k-invalid-msg" data-for="ST"></span>
             </div>
         </header>
@@ -489,18 +488,14 @@
                 </label>
             </li>
             <li>
-                <label>
-                    Tech No.<input name="nmTechNo" type="number" data-bind="value: labor.No, disabled: lock.dtl" placeholder="required" required data-required-msg="Tech No. is required" />
-                    <a data-role="button" data-icon="search" data-bind="click: show.techsearch, invisible: lock.dtl" class="ls-detail-btn" style="left: 40%; z-index: 2"></a>
-                </label>
-            </li>
-            <li>
-                <label>Name<input type="text" data-bind="value: labor.Name" disabled="disabled" /></label>
+                <label>Name<input type="text" data-bind="value: labor.Name" disabled="disabled"/></label>
+                <span data-bind="value: labor.No" class="ls-hidden"></span>
                 <a data-role="button" data-d="0" data-icon="more" data-bind="click: add.labors, invisible: lock.lbrSel" class="ls-detail-btn"></a>
+                <a data-role="button" data-icon="search" data-bind="click: show.techsearch, invisible: lock.dtl" class="ls-detail-btn ls-r-btn"></a>
             </li>
             <li>
                 <label>Date<input class="ls-mobi-date" type="text" data-bind="dateValue: labor.Date, disabled: lock.dtl" /></label>
-                <a data-role="button" data-d="1" data-icon="more" data-bind="click: add.labors, invisible: lock.lbrSel" class="ls-detail-btn"></a>
+                <a data-role="button" data-d="1" data-icon="more" data-bind="click: add.labors, invisible: lock.lbrSel" class="ls-detail-btn"></a>                
             </li>
         </ul>
     </div>
@@ -513,20 +508,15 @@
                 <a data-role="button" data-align="right" data-bind="click: del.exp, invisible: lock.exp" class="ls-del-btn">Delete</a>
             </div>
             <div>
-                <span class="k-invalid-msg" data-for="nmTechNoExp"></span>
                 <span class="k-invalid-msg" data-for="nmDescExp"></span>
                 <span class="k-invalid-msg" data-for="nmAmtExp"></span>
             </div>
         </header>
         <ul data-role="listview" data-style="inset">
             <li>
-                <label>
-                    Tech No.<input name="nmTechNoExp" type="number" data-bind="value: exp.No, disabled: lock.exp" placeholder="required" required data-required-msg="Tech No. is required" />
-                    <a data-role="button" data-icon="search" data-bind="click: show.techsearch, invisible: lock.exp" class="ls-detail-btn" style="left: 40%; z-index: 2"></a>
-                </label>
-            </li>
-            <li>
                 <label>Name<input type="text" data-bind="value: exp.Name" disabled="disabled" /></label>
+                <span data-bind="value: exp.No" class="ls-hidden"></span>
+                <a data-role="button" data-icon="search" data-bind="click: show.techsearch, invisible: lock.exp" class="ls-detail-btn ls-r-btn"></a>
             </li>
             <li>
                 <label>Date<input class="ls-mobi-date" type="text" data-bind="dateValue: exp.Date, disabled: lock.exp" /></label>
@@ -742,7 +732,6 @@
 
     <div id="msgblk"><div></div></div>
     <select id="imgCatWo"></select>
-    <select id="imgCatEquip"></select>
 
     <div id="diaToolSearch" data-role="modalview" data-init="sv.ui.vwInitModal" style="width: 95%; height: 90%;">
         <div data-role="header">
@@ -819,7 +808,7 @@
     <script type="text/x-kendo-template" id="tmLabor">
         <a>
             <div>
-                <div>#= Name # <span class="ls-dim">(#= No #)</span></div>
+                <div>#= Name #</div>
             </div>
             #= sv.helper.renderTmpl($('\#tmHr'), data) #
         </a>
@@ -846,7 +835,7 @@
     </script>
 
     <script type="text/x-kendo-template" id="tmTechSearch">
-        <a>#= Name # (#= No #)</a>
+        <a>#= Name #</a>
     </script>
 
     <script type="text/x-kendo-template" id="tmAct">
