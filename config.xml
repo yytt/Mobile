@@ -18,10 +18,6 @@
   <gap:platform name="android" />
   <!--<gap:platform name="winphone" />-->
 
-  <gap:config-file platform="android" parent="/manifest/application">
-    <activity android:launchMode="singleTop" />
-  </gap:config-file>
-
   <access origin="*"/>
 
   <preference name="phonegap-version" value="3.6.3" />  
@@ -31,6 +27,10 @@
   <preference name="SplashScreenDelay" value="10000"/>
   <preference name="AndroidPersistentFileLocation" value="Internal" />
   <preference name="iosPersistentFileLocation" value="Library" />
+
+  <gap:config-file platform="android" parent="/manifest/application">
+    <activity android:launchMode="singleTop" />
+  </gap:config-file>
 
   <gap:plugin name="org.apache.cordova.device" />  
   <gap:plugin name="org.apache.cordova.splashscreen" />
