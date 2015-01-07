@@ -17,13 +17,16 @@
   <gap:platform name="ios" />
   <gap:platform name="android" />
   <!--<gap:platform name="winphone" />-->
-  
+
+  <gap:config-file platform="android" parent="/manifest/application">
+    <activity android:launchMode="singleTop" />
+  </gap:config-file>
+
   <access origin="*"/>
 
   <preference name="phonegap-version" value="3.6.3" />  
   <preference name="android-minSdkVersion" value="15" />
   <preference name="android-targetSdkVersion" value="19" />
-  <preference name="AndroidLaunchMode" value="singleTop" />
   <preference name="AutoHideSplashScreen" value="false" />
   <preference name="SplashScreenDelay" value="10000"/>
   <preference name="AndroidPersistentFileLocation" value="Internal" />
