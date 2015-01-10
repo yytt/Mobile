@@ -28,9 +28,10 @@
             <li>
                 TICKET
                 <ul>
+                    <li data-icon="add"><a data-bind="click: mainMenu.addTkt" data-cat="L" class="ls-hl-mnu">Add Job Ticket</a></li>
                     <li data-icon="na"><a data-bind="click: mainMenu.tgView">Toggle Active/Completed</a></li>
                     <li data-icon="search"><a href="#vwHist" data-transition="none">Search History</a></li>
-                    <li data-icon="add"><a data-bind="click: mainMenu.addTkt">Add a Ticket</a></li>
+                    <li data-icon="add"><a data-bind="click: mainMenu.addTkt" data-cat="E">Add Expense Ticket</a></li>
                 </ul>
             </li>
             <li>
@@ -91,26 +92,26 @@
             <li>
                 <label><span data-bind="text: cont.custName">Cust. Name</span><input name="nmCustName" type="text" data-bind="value: wo.CustName, disabled: lock.custName" placeholder="required" /></label>
             </li>
-            <li data-bind="visible: isDisp">
+            <li data-bind="visible: isDispJob">
                 <label>Contact<input type="text" data-bind="value: wo.Contact, disabled: isTktCmpSig" /></label>
             </li>
-            <li data-bind="visible: isDisp">
+            <li data-bind="visible: isDispJob">
                 <label>
                     Tel <a data-role="button" data-icon="phone" data-bind="click: show.dial" class="ls-detail-btn"></a>
                     <input type="tel" data-bind=" value: wo.Tel, disabled: isTktCmpSig" />
                 </label>
             </li>
-            <li data-bind="visible: isDisp">
+            <li data-bind="visible: isDispJob">
                 <label>Cust. PO<input type="text" data-bind="value: wo.CustPo, disabled: isTktCmpSig" /></label>
             </li>
-            <li data-bind="visible: isDisp">
+            <li data-bind="visible: isDispJob">
                 <label>
                     Rep <a data-role="button" data-icon="phone" data-bind="click: show.dialResp" class="ls-detail-btn"></a>
                     <input type="text" data-bind="value: wo.Resp, disabled: isTktCmpSig" />
                 </label>
             </li>
         </ul>
-        <ul data-role="listview" data-style="inset" data-type="group">
+        <ul data-role="listview" data-style="inset" data-type="group" data-bind="invisible: isExp">
             <li>
                 <div class="km-group-title"><span data-bind="text: cont.reason">Reason For Call</span> <a data-role="button" data-icon="info" data-bind="click: show.cmtD, visible: isDisp" class="ls-detail-btn"></a></div>
                 <ul>
@@ -120,7 +121,7 @@
                 </ul>
             </li>
         </ul>
-        <ul data-role="listview" data-style="inset" data-type="group" data-bind="visible: isDisp">
+        <ul data-role="listview" data-style="inset" data-type="group" data-bind="visible: isDispJob">
             <li>
                 <div class="km-group-title">Address <a data-role="button" data-icon="globe" data-bind="click: show.map" class="ls-detail-btn"></a></div>
                 <ul>
@@ -219,7 +220,7 @@
             <div data-role="navbar">
                 <a data-role="button" class="km-back" data-align="left" data-bind="click: save.wo">Back</a>
                 <span data-role="view-title"></span>
-                <a data-role="button" data-align="right" data-icon="add" data-bind="click: add.exp, invisible: isTktCmpSig" class="ls-navadd-btn">Exps</a>
+                <a data-role="button" data-align="right" data-icon="add" data-bind="click: add.exp, invisible: lock.expAdd" class="ls-navadd-btn">Exps</a>
             </div>
         </header>
         <ul id="lstExp" data-role="listview" data-style="inset" data-template="tmExp" data-header-template="tmExpHeader" data-bind="source: ds.exps, click: show.exp"></ul>
@@ -516,7 +517,7 @@
             <li>
                 <label>Name<input type="text" data-bind="value: exp.Name" disabled="disabled" /></label>
                 <span data-bind="value: exp.No" class="ls-hidden"></span>
-                <a data-role="button" data-icon="search" data-bind="click: show.techsearch, invisible: lock.exp" class="ls-detail-btn ls-r-btn"></a>
+                <a data-role="button" data-icon="search" data-bind="click: show.techsearch, invisible: lock.expDel" class="ls-detail-btn ls-r-btn"></a>
             </li>
             <li>
                 <label>Date<input class="ls-mobi-date" type="text" data-bind="dateValue: exp.Date, disabled: lock.exp" /></label>
@@ -815,7 +816,7 @@
     </script>
 
     <script type="text/x-kendo-template" id="tmExpHeader">
-        #= sv.helper.getTechName(value) # (#= value #) #= (!sv.vm.isTktCmp() ? '<a data-role="button" data-icon="add" data-click="sv.vm.add.exp" data-dftno="' + value +'" class="ls-add-btn"></a>' : '') #
+        #= sv.helper.getTechName(value) #
     </script>
 
     <script type="text/x-kendo-template" id="tmExp">
