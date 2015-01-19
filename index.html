@@ -9,7 +9,8 @@
     <title>Letsos Mobile</title>
     <link href="css/signaturepad/jquery.signaturepad.min.css" rel="stylesheet">
     <link href="css/mobiscroll/mobiscroll.scroller.min.css" rel="stylesheet" />
-    <link href="css/mobiscroll/mobiscroll.scroller.ios.min.css" rel="stylesheet" />
+    <link href="css/mobiscroll/mobiscroll.scroller.ios.min.css" rel="stylesheet"/>
+    <link href="css/calculator/cal.min.css" rel="stylesheet"/>
     <link href="css/kendo/kendo.common.min.css" rel="stylesheet">
     <link href="css/kendo/kendo.blueopal.min.css" rel="stylesheet">
     <link href="css/kendo/kendo.mobile.all.min.css" rel="stylesheet">
@@ -28,10 +29,10 @@
             <li>
                 TICKET
                 <ul>
-                    <li data-icon="add"><a data-bind="click: mainMenu.addTkt" data-cat="L" class="ls-hl-mnu">Add Job Ticket</a></li>
                     <li data-icon="na"><a data-bind="click: mainMenu.tgView">Toggle Active/Completed</a></li>
                     <li data-icon="search"><a href="#vwHist" data-transition="none">Search History</a></li>
-                    <li data-icon="add"><a data-bind="click: mainMenu.addTkt" data-cat="E">Add Expense Ticket</a></li>
+                    <li data-icon="add"><a data-bind="click: mainMenu.addTkt" data-cat="L" class="ls-hl-mnu">Add Job Ticket</a></li>
+                    <li data-icon="add"><a data-bind="click: mainMenu.addTkt" data-cat="E">Add Expense</a></li>
                 </ul>
             </li>
             <li>
@@ -83,14 +84,14 @@
             <li data-role="touch" data-hold="sv.helper.jobNoHold">
                 <label>
                     Job# <a id="btnImgWo" data-role="button" data-icon="gallery-a" data-bind="click: show.img.catWo, invisible: isVSHE" class="ls-detail-btn"></a>
-                    <input name="nmJobNo" type="number" data-bind="value: wo.JobNo, disabled: lock.jobcc, events: {change: jobNoChange}" placeholder="required" required data-required-msg="Job No. is required" max="810999" data-max-msg="Job No. is invalid" />
+                    <input name="nmJobNo" type="number" data-bind="value: wo.JobNo, disabled: lock.jobcc, events: {change: jobCcChange}" placeholder="required" required data-required-msg="Job No. is required" max="810999" data-max-msg="Job No. is invalid" />
                 </label>
             </li>
             <li>
-                <label>Cost Code<input name="nmCc" type="number" data-bind="value: wo.Cc, disabled: lock.jobcc" placeholder="required" required data-required-msg="Cost Code is required" min="0" max="999999" data-max-msg="Cost Code is invalid" /></label>
+                <label>Cost Code<input name="nmCc" type="number" data-bind="value: wo.Cc, disabled: lock.jobcc, events: {change: jobCcChange}" placeholder="required" required data-required-msg="Cost Code is required" min="0" max="999999" data-max-msg="Cost Code is invalid" /></label>
             </li>
             <li>
-                <label><span data-bind="text: cont.custName">Cust. Name</span><input name="nmCustName" type="text" data-bind="value: wo.CustName, disabled: lock.custName" placeholder="required" /></label>
+                <label><span data-bind="text: cont.custName">Cust./Job</span><input name="nmCustName" type="text" data-bind="value: wo.CustName, disabled: isTktCmpSig" placeholder="required" /></label>
             </li>
             <li data-bind="visible: isDispJob">
                 <label>Contact<input type="text" data-bind="value: wo.Contact, disabled: isTktCmpSig" /></label>
@@ -196,6 +197,11 @@
                         <textarea data-bind="value: wo.Misc, disabled: isTktCmpSig"></textarea>
                     </li>
                 </ul>
+            </li>
+            <li>
+                <div class="km-group-title">
+                    Expense Ticket <a data-role="button" data-icon="add" data-bind="click: add.expTkt" class="ls-add-btn"></a>
+                </div>
             </li>
         </ul>
     </div>
@@ -517,16 +523,17 @@
             <li>
                 <label>Name<input type="text" data-bind="value: exp.Name" disabled="disabled" /></label>
                 <span data-bind="value: exp.No" class="ls-hidden"></span>
-                <a data-role="button" data-icon="search" data-bind="click: show.techsearch, invisible: lock.expDel" class="ls-detail-btn ls-r-btn"></a>
+                <a data-role="button" data-icon="search" data-bind="click: show.techsearch, invisible: lock.exp" class="ls-detail-btn ls-r-btn"></a>
             </li>
             <li>
                 <label>Date<input class="ls-mobi-date" type="text" data-bind="dateValue: exp.Date, disabled: lock.exp" /></label>
             </li>
             <li>
-                <label>Description<input name="nmDescExp" type="text" data-bind="value: exp.Desc" placeholder="required" required data-required-msg="Description is required" /></label>
+                <label>Description<input name="nmDescExp" type="text" data-bind="value: exp.Desc, disabled: lock.exp" placeholder="required" required data-required-msg="Description is required" /></label>
             </li>
             <li>
-                <label>Amount <input name="nmAmtExp" type="number" data-bind="value: exp.Amt, disabled: lock.exp" data-value-update="input" placeholder="required" required data-required-msg="Amount is required" /></label>
+                <label>Amount <input name="nmAmtExp" type="number" data-bind="value: exp.Amt, disabled: lock.exp" data-value-update="input" placeholder="required" required data-required-msg="Amount is required"/></label>
+                <a data-role="button" data-icon="calculator-a" data-bind="click: show.calculator, invisible: lock.exp" class="ls-detail-btn ls-r-btn"></a>
             </li>
             <li>
                 <label>Receipt<span class="ls-lv-r-col"><a data-role="button" data-icon="gallery-a" data-bind="click: show.img.exp" class="ls-detail-btn"></a></span></label>
@@ -673,6 +680,50 @@
             </div>
         </div>
         <ul id="lstTimesheet"></ul>
+    </div>
+
+    <div id="vwCalculator" data-role="view" data-model="sv.vm" data-init="sv.ui.vwInit" data-show="sv.ui.vwShow" data-level="1">
+        <header data-role="header">
+            <div data-role="navbar">
+                <a data-role="button" class="km-back" data-align="left" data-bind="click: save.expAmt">Set</a>
+                <span data-role="view-title"></span>
+                <a data-role="button" data-align="right" data-bind="click: save.expAmt">Cancel</a>
+            </div>
+        </header>
+        <div id="keypad">
+            <div class="horizontal display">
+                <input id="displayPanel" type="number" value="0" disabled="disabled"/>
+            </div>
+            <div class="horizontal ">
+                <div id="keyC" data-rnc-tag="C" class="key control-key">C</div>
+                <div id="keyPlusMinus" class="key control-key">+/-</div>
+                <div id="keyPercent" class="key control-key">%</div>
+                <div id="keyDivide" class="key operation-key">/</div>
+            </div>
+            <div class="horizontal">
+                <div id="key7" data-rnc-tag="7" class="key">7</div>
+                <div id="key8" data-rnc-tag="8" class="key">8</div>
+                <div id="key9" data-rnc-tag="9" class="key">9</div>
+                <div id="keyMultiply" class="key operation-key">x</div>
+            </div>
+            <div class="horizontal">
+                <div id="key4" data-rnc-tag="4" class="key">4</div>
+                <div id="key5" data-rnc-tag="5" class="key">5</div>
+                <div id="key6" data-rnc-tag="6" class="key">6</div>
+                <div id="keySubtract" class="key operation-key">-</div>
+            </div>
+            <div class="horizontal">
+                <div id="key1" data-rnc-tag="1" class="key">1</div>
+                <div id="key2" data-rnc-tag="2" class="key">2</div>
+                <div id="key3" data-rnc-tag="3" class="key">3</div>
+                <div id="keyAdd" class="key operation-key">+</div>
+            </div>
+            <div class="horizontal">
+                <div id="key0" data-rnc-tag="0" class="key double-wide">0</div>
+                <div id="keyDecimalPoint" data-rnc-tag="." class="key">.</div>
+                <div id="keyEquals" class="key operation-key">=</div>
+            </div>
+        </div>
     </div>
 
     <!-- other -->
@@ -836,7 +887,7 @@
     </script>
 
     <script type="text/x-kendo-template" id="tmTechSearch">
-        <a>#= Name #</a>
+        <a>#= Name # <span class="ls-dim">(#= No #)</span></a>
     </script>
 
     <script type="text/x-kendo-template" id="tmAct">
@@ -858,11 +909,15 @@
     </script>
 
     <script type="text/x-kendo-template" id="tmHr">
-        <div class="ls-itm-dtl ls-lbrhr">
-            <div><span class="ls-dim">ST </span>#= ((ST || 0) + (data.TT || 0)) || '' #</div>
-            <div><span class="ls-dim">OT </span>#= OT || '' #</div>
-            <div><span class="ls-dim">DT </span>#= DT || '' #</div>
+        <div class="ls-itm-dtl">
+            # if (data.WoCat == 'L') {#
+            <div class="ls-lbrhr"><span class="ls-dim">ST </span>#= ((data.ST || 0) + (data.TT || 0)) || '' #</div>
+            <div class="ls-lbrhr"><span class="ls-dim">OT </span>#= data.OT || '' #</div>
+            <div class="ls-lbrhr"><span class="ls-dim">DT </span>#= data.DT || '' #</div>
             <div class="ls-dim" style="width: auto">#= sv.helper.shiftDesc(data.Cat) #</div>
+            # } else {#
+            <div><span class="ls-dim">EXP </span>#= kendo.toString(data.Amt || 0, 'c2') #</div>
+            # } #
         </div>
     </script>
 
@@ -911,6 +966,7 @@
 
     <script src="js/jquery.min.js"></script>
     <script src="js/softkeyboard.min.js"></script>
+    <script src="js/calculator.min.js"></script>
     <script src="js/webintent.min.js"></script>
     <script src="js/pushNotification.min.js"></script>
     <script src="js/imagepicker.min.js"></script>
